@@ -1,36 +1,41 @@
-//sub[v]: size of subtree whose root is v
-void dfsSubtree(int node, int pnode) {
-	sub[node] = 1;
-	for(auto cnode : adj[node]) {
-		if(cnode != pnode) {
-			dfsSubtree(cnode, node);
-			sub[node] += sub[cnode];
-		}
+struct Edge {
+	int to, weight, ri;
+};
+vector<Edge> adj[MAXN];
+
+
+// Centroid Decomposition
+int sz[MAXN];
+void dfsSize(int v, int p) {
+	sz[v] = 1;
+	for(auto c : adj[v]) if(c.to != p) {
+		dfsSize(c.to, v);
+		sz[v] += sz[c.to];
 	}
 }
 
-
-
-int dfsCentroid(int node, int pnode, int size) {
-	for(auto cnode : adj[node]) {
-		if(cnode != pnode && sub[cnode] > size / 2)
-			return dfsCentroid(cnode, node, size);
+int dfsCentroid(int v, int p, int size) {
+	for(auto c : adj[v]) {
+		if(c.to != p && sz[c.to] > size/2)
+			return dfsCentroid(c.to, v, size);
 	}
-	return node;
+	return v;
 }
 
+void decompose(int v, int &ans) {
+	dfsSize(v, -1);
+	int ctr = dfsCentroid(v, -1, sz[v]);
+	solve(ctr);
 
+	for(auto c : adj[ctr]) {
+		// erase edge of ctr
+		swap(adj[c.to][c.ri], adj[c.to].back());
+		int v =	adj[c.to][c.ri].to;
+		int id = adj[c.to][c.ri].ri;
+		adj[v][id].ri = c.ri;
+		adj[c.to].pop_back();
 
-void decompose(int node, int pCtr) {
-	dfsSubtree(node, -1);
-	int ctr = dfsCentroid(node, node, sub[node]);
-	if(pCtr == -1)  // root of centroid tree
-		pCtr = ctr;	
-	ctPar[ctr] = pCtr;
-
-	for(auto cnode : adj[ctr]) {
-		adj[cnode].erase(ctr);
-		decompose(cnode, ctr);
+		decompose(c.to, ans);
 	}
 	adj[ctr].clear();
 }
