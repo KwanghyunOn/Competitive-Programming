@@ -1,12 +1,17 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+template <typename T> int sgn(T x) {
+	return (T(0) < x) - (x < T(0));
+}
+
+
 
 /********** struct point **********/
 typedef complex<double> Point;
 #define x real()
 #define y imag()
-#define PI 3.14159265358979323846
+#define M_PI 3.14159265358979323846
 
 Point scale(Point p, Point o, double factor) { return o + (p-o)*factor; }
 Point rotate(Point p, double a) { return p * polar(1.0, a); }
@@ -30,7 +35,7 @@ bool inAngle(Point p, Point o, Point a, Point b) {
 }
 double orientedAngle(Point o, Point a, Point b) {
 	if(orient(o, a, b) >= 0) return angle(a-o, b-o);
-	else return 2*PI - angle(a-o, b-o);
+	else return 2*M_PI - angle(a-o, b-o);
 }
 
 bool half(Point p) {
@@ -70,7 +75,7 @@ struct Line {
 	Point refl(Point p) { return p - perp(v)*2.0*side(p)/sq(v); }
 };
 
-bool intersect(Line l1, Line l2, Point &out) {
+bool lineAndLine(Line l1, Line l2, Point &out) {
 	double d = cross(l1.v, l2.v);
 	if(d == 0) return false;
 	out = (l2.v * l1.c - l1.v * l2.c) / d;
@@ -106,7 +111,7 @@ struct cmpX {
 		return make_tuple(a.x, a.y) < make_tuple(b.x, b.y);
 	}
 };
-set<Point, cmpX> inters(Point a, Point b, Point c, Point d) {
+set<Point, cmpX> segAndSeg(Point a, Point b, Point c, Point d) {
 	Point out;
 	if(properInter(a, b, c, d, out)) return {out};
 	set<Point, cmpX> s;
@@ -144,4 +149,79 @@ double areaPolygon(vector<Point> &p) {
 	for(int i = 0, n = (int)p.size(); i < n; i++)
 		area += cross(p[i], p[(i+1)%n]);
 	return abs(area) / 2.0;
+}
+
+// cutting-ray test
+bool above(Point a, Point p) {
+	return p.y >= a.y;
+}
+bool crossesRay(Point a, Point p, Point q) {
+	return (above(a, q) - above(a, p)) * orient(a, p, q) > 0;
+}
+// if strict, returns false when A is on the boundary
+bool inPolygon(vector<Point> &p, Point a, bool strict = true) {
+	int crossNum = 0;
+	for(int i = 0, n = (int)p.size(); i < n; i++) {
+		if(onSegment(a, p[i], p[(i+1)%n]))
+			return !strict;
+		if(crossesRay(a, p[i], p[(i+1)%n])) crossNum++;
+	}
+	return crossNum & 1;
+}
+// another method is using winding number
+double angleTravelled(Point a, Point p, Point q) {
+	return (orient(a, p, q) > 0) ? angle(p-a, q-a) : -angle(p-a, q-a);
+}
+int windingNumber(vector<Point> &p, Point a) {
+	double ampli = 0;
+	for(int i = 0, n = (int)p.size(); i < n; i++)
+		ampli += angleTravelled(a, p[i], p[(i+1)%n]);
+	return round(ampli / (2*M_PI));
+}
+
+
+
+
+/********** circles ***********/
+Point circumCenter(Point a, Point b, Point c) {
+	b = b-a, c = c-a;
+	assert(cross(b, c) != 0);
+	return a + perp(b*sq(c) - c*sq(b)) / (2.0 * cross(b, c));
+}
+
+int circleAndLine(Point o, double r, Line l, pair<Point, Point> &out) {
+	double h2 = r*r - l.sqDist(o);
+	if(h2 >= 0.0) {
+		Point p = l.proj(o);
+		Point h = l.v*sqrt(h2)/abs(l.v);
+		out = {p-h, p+h};
+	}
+	return 1 + sgn(h2);
+}
+
+int circleAndCircle(Point o1, double r1, Point o2, double r2, pair<Point, Point> &out) {
+	Point d = o2-o1;
+	double d2 = sq(d);
+	if(d2 == 0.0) { assert(r1 != r2); return 0; }
+	double pd = (d2 + r1*r1 - r2*r2) / 2.0;
+	double h2 = r1*r1 - pd*pd/d2;
+	if(h2 >= 0) {
+		Point p = o1 + d*pd/d2, h = perp(d)*sqrt(h2/d2);
+		out = {p-h, p+h};
+	}
+	return 1 + sgn(h2);
+}
+
+// inner, outer tangents of two circles
+// can find tangent from a point by setting r2 to 0
+int tangents(Point o1, double r1, Point o2, double r2, bool inner, vector<pair<Point, Point>> &out) {
+	if(inner) r2 = -r2;
+	Point d = o2-o1;
+	double dr = r1-r2, d2 = sq(d), h2 = d2 - dr*dr;
+	if(d2 == 0.0 || h2 < 0.0) { assert(h2 != 0); return 0; }
+	for(double sign : {-1.0, 1.0}) {
+		Point v = (d*dr + perp(d)*sqrt(h2)*sign)/d2;
+		out.push_back({o1 + v*r1, o2 + v*r2});
+	}
+	return 1 + (h2 > 0.0);
 }
