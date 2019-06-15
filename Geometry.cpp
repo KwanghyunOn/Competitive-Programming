@@ -27,14 +27,14 @@ double angle(Point v, Point w) {
 	return acos(max(-1.0, min(1.0, cosA)));
 }
 
-double orient(Point o, Point a, Point b) { return cross(a-o, b-o); }
-bool inAngle(Point p, Point o, Point a, Point b) {
-	assert(orient(o, a, b) != 0);
-	if(orient(o, a, b) < 0) swap(a, b);
-	return orient(o, a, p) >= 0 && orient(o, b, p) <= 0;
+double ccw(Point a, Point b, Point o) { return cross(a-o, b-o); }
+bool inAngle(Point p, Point a, Point b, Point o) {
+	assert(ccw(a, b, o) != 0);
+	if(ccw(a, b, o) < 0) swap(a, b);
+	return ccw(a, p, o) >= 0 && ccw(b, p, o) <= 0;
 }
 double orientedAngle(Point o, Point a, Point b) {
-	if(orient(o, a, b) >= 0) return angle(a-o, b-o);
+	if(ccw(a, b, o) >= 0) return angle(a-o, b-o);
 	else return 2*M_PI - angle(a-o, b-o);
 }
 
@@ -94,12 +94,12 @@ Line bisector(Line l1, Line l2, bool interior) {
 /********** segments ***********/
 bool inDisk(Point p, Point a, Point b) { return dot(a-p, b-p) <= 0; }
 bool onSegment(Point p, Point a, Point b) {
-	return orient(p, a, b) == 0 && inDisk(p, a, b);
+	return ccw(a, b, p) == 0 && inDisk(p, a, b);
 }
 
 bool properInter(Point a, Point b, Point c, Point d, Point &out) {
-	double oa = orient(c, d, a), ob = orient(c, d, b);
-	double oc = orient(a, b, c), od = orient(a, b, d);
+	double oa = ccw(c, d, a), ob = ccw(c, d, b);
+	double oc = ccw(a, b, c), od = ccw(a, b, d);
 	if(oa*ob < 0 && oc*od < 0) {
 		out = (a*ob - b*oa) / (ob-oa);
 		return true;
@@ -156,7 +156,7 @@ bool above(Point a, Point p) {
 	return p.y >= a.y;
 }
 bool crossesRay(Point a, Point p, Point q) {
-	return (above(a, q) - above(a, p)) * orient(a, p, q) > 0;
+	return (above(a, q) - above(a, p)) * ccw(p, q, a) > 0;
 }
 // if strict, returns false when A is on the boundary
 bool inPolygon(vector<Point> &p, Point a, bool strict = true) {
@@ -168,15 +168,37 @@ bool inPolygon(vector<Point> &p, Point a, bool strict = true) {
 	}
 	return crossNum & 1;
 }
+
 // another method is using winding number
 double angleTravelled(Point a, Point p, Point q) {
-	return (orient(a, p, q) > 0) ? angle(p-a, q-a) : -angle(p-a, q-a);
+	return (ccw(p, q, a) > 0) ? angle(p-a, q-a) : -angle(p-a, q-a);
 }
 int windingNumber(vector<Point> &p, Point a) {
 	double ampli = 0;
 	for(int i = 0, n = (int)p.size(); i < n; i++)
 		ampli += angleTravelled(a, p[i], p[(i+1)%n]);
 	return round(ampli / (2*M_PI));
+}
+
+// finding convex hull
+vector<Point> convexHull(vector<Point> p) {
+	sort(p.begin(), p.end(), [](Point a, Point b) {
+		return make_tuple(a.x, a.y) < make_tuple(b.x, b.y);
+	});
+	vector<Point> hull;
+	hull.reserve(p.size() + 1);
+	for(int phase = 0; phase < 2; phase++) {
+		auto start = hull.size();
+		for(auto v : p) {
+			while(hull.size() >= start+2 && ccw(v, hull.back(), hull[hull.size()-2]) <= 0)
+				hull.pop_back();
+			hull.push_back(v);
+		}
+		hull.pop_back();
+		reverse(p.begin(), p.end());
+	}
+	if(hull.size() == 2 && hull[0] == hull[1]) hull.pop_back();
+	return hull;
 }
 
 
