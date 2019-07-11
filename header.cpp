@@ -13,8 +13,12 @@ typedef pair<ll, ll> pll;
 #define IINF 87654321987654321
 #define MOD 1000000007
 
-// fast cin
 int main() {
+	// fast cin
 	ios::sync_with_stdio(false);
 	cin.tie(0);
+	
+	// string to int
+	string s;
+	int t = stoi(s);
 }
