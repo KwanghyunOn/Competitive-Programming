@@ -16,7 +16,7 @@ void manacherEven(string &s) {
     int n = (int)s.size();
     int R = -1, P = -1;
     for(int i = 0; i < n; i++) {
-        if(i <= R) B[i] = min(B[2*P-i-1], R-i+1);
+        if(i <= R) B[i] = min(B[2*P-i], R-i+1);
         else B[i] = 0;
         while(0 <= i-B[i]-1 && i+B[i] < n && s[i-B[i]-1] == s[i+B[i]]) B[i]++;
         if(R < i+B[i]-1) R = i+B[i]-1, P = i;
