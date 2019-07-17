@@ -24,15 +24,11 @@ void addChar(char *s, int p) {
 	maxSuf = v;
 	if(t == iroot) {
 		v->len = 1;
-		v->flag[x] = true;
 		v->suf = root;
 		return;
 	}
 
 	v->len = t->len + 2;
-	for(int i = 0; i < 26; i++)
-		v->flag[i] = t->flag[i];
-	v->flag[x] = true;
 	t = t->suf;
 	while(true) {
 		if(p-(t->len)-1 >= 0 && s[p-(t->len)-1] == s[p]) break;
