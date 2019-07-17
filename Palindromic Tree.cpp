@@ -1,17 +1,9 @@
 struct Node {
 	int len;
-	bool flag[26];
 	Node *nxt[26], *suf;
 	Node() : len(0), suf(NULL) {
 		for(int i = 0; i < 26; i++)
-			flag[i] = false, nxt[i] = NULL;
-	}
-
-	int countChar() {
-		int cnt = 0;
-		for(int i = 0; i < 26; i++)
-			if(flag[i]) cnt++;
-		return cnt;
+			nxt[i] = NULL;
 	}
 } *iroot, *root, *maxSuf;
 
