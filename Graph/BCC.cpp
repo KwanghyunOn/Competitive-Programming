@@ -1,5 +1,5 @@
 // https://gist.github.com/koosaga/6f6fd50dd7067901f1b1
-
+// Vertex-disjoint BCC
 void dfs(int x, int p){
 	dfn[x] = low[x] = ++piv;
 	par[x] = p;
@@ -29,5 +29,31 @@ void color(int x, int c){
 		else{
 			color(w, c);
 		}
+	}
+}
+
+
+// Edge-disjoint BCC
+int num[MAXN], low[MAXN], cnum;
+void dfs(int v, int p) {
+	num[v] = low[v] = ++cnum;
+	for(auto c : adj[v]) {
+		if(c.to == p) continue;
+		if(num[c.to]) low[v] = min(low[v], num[c.to]);
+		else {
+			dfs(c.to, v);
+			low[v] = min(low[v], low[c.to]);
+		}
+	}
+}
+
+int bcc[MAXN], ccol;
+bool vis[MAXN];
+void color(int v, int col) {
+	bcc[v] = col;
+	for(auto c : adj[v]) if(!vis[c.to]) {
+		vis[c.to] = true;
+		if(low[c.to] > num[v]) color(c.to, ++ccol);
+		else color(c.to, col);
 	}
 }
