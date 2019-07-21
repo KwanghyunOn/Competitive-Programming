@@ -38,11 +38,11 @@ int num[MAXN], low[MAXN], cnum;
 void dfs(int v, int p) {
 	num[v] = low[v] = ++cnum;
 	for(auto c : adj[v]) {
-		if(c.to == p) continue;
-		if(num[c.to]) low[v] = min(low[v], num[c.to]);
+		if(c == p) continue;
+		if(num[c]) low[v] = min(low[v], num[c]);
 		else {
-			dfs(c.to, v);
-			low[v] = min(low[v], low[c.to]);
+			dfs(c, v);
+			low[v] = min(low[v], low[c]);
 		}
 	}
 }
@@ -51,9 +51,9 @@ int bcc[MAXN], ccol;
 bool vis[MAXN];
 void color(int v, int col) {
 	bcc[v] = col;
-	for(auto c : adj[v]) if(!vis[c.to]) {
-		vis[c.to] = true;
-		if(low[c.to] > num[v]) color(c.to, ++ccol);
-		else color(c.to, col);
+	for(auto c : adj[v]) if(!vis[c]) {
+		vis[c] = true;
+		if(low[c] > num[v]) color(c, ++ccol);
+		else color(c, col);
 	}
 }
