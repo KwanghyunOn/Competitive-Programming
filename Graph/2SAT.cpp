@@ -1,109 +1,62 @@
-const int MAXN = 10050;
-
-vector<int> adj[2 * MAXN], rev[2 * MAXN];
-int component[2 * MAXN], indeg[2 * MAXN], num[2 * MAXN];
-vector<int> cmp[2 * MAXN], order, topo;
-set<int> sEdge[2 * MAXN];
-bool vis[2 * MAXN];
-int n;
-
-int node(int x) {
-	if(x < 0)
-		return 2 * (-x) - 1;
-	else
-		return 2 * x - 2;
+vector<int> adj[2*MAXN], rev[2*MAXN];
+int n, m;
+inline int f(int x) { return (x > 0) ? x : -x+n; }
+void addEdge(int a, int b) {
+	adj[f(-a)].push_back(f(b));
+	rev[f(b)].push_back(f(-a));
+	adj[f(-b)].push_back(f(a));
+	rev[f(a)].push_back(f(-b));
 }
 
-void dfs(int node) {
-	if(vis[node]) return;
-	vis[node] = true;
-	for(auto &cnode : adj[node])
-		dfs(cnode);
-	order.pb(node);
+void readInput() {
+	scanf("%d%d", &n, &m);
+	rep(i, m) {
+		int a, b; scanf("%d%d", &a, &b);
+		addEdge(a, b);
+	}
 }
 
-void rev_dfs(int node, int cnt) {
-	if(vis[node]) return;
-	vis[node] = true;
-	cmp[cnt].pb(node);
-	component[node] = cnt;
-	for(auto &cnode : rev[node])
-		rev_dfs(cnode, cnt);
+
+bool vis[2*MAXN];
+void dfs(int v, vector<int> &order) {
+	for(auto c : adj[v]) if(!vis[c]) {
+		vis[c] = true;
+		dfs(c, order);
+	}
+	order.push_back(v);
 }
 
-void topSort(int node) {
-	if(vis[node]) return;
-	vis[node] = true;
-	for(auto &cnode : sEdge[node])
-		topSort(cnode);
-	topo.pb(node);
+int ci[2*MAXN];
+void rev_dfs(int v, int id) {
+	ci[v] = id;
+	for(auto c : rev[v]) if(!vis[c]) {
+		vis[c] = true;
+		rev_dfs(c, id);
+	}
 }
 
-int main() {
-	int m;
-	geti(n, m);
-	while(m--) {
-		int a, b;
-		geti(a, b);
-		adj[node(-a)].pb(node(b));
-		rev[node(b)].pb(node(-a));
-		adj[node(-b)].pb(node(a));
-		rev[node(a)].pb(node(-b));
-	}
+int SCC() {
+	vector<int> order;
+	repp(v, 2*n) if(!vis[v]) vis[v] = true, dfs(v, order);
+	repp(v, 2*n) vis[v] = false;
+	reverse(order.begin(), order.end());
+	int sz = 0;
+	for(auto v : order) if(!vis[v]) vis[v] = true, rev_dfs(v, ++sz);
+	return sz;
+}
 
-  // Kosaju start
-	rep(i, 2 * n) {
-		if(!vis[i])
-			dfs(i);
+set<int> sadj[2*MAXN];
+void findSCCEdge() {
+	repp(v, 2*n) {
+		for(auto c : adj[v])
+			if(ci[v] != ci[c]) sadj[ci[v]].insert(ci[c]);
 	}
-	memset(vis, 0, sizeof vis);
-	reverse(all(order));
-	int cnt = 0;
-	for(auto &node : order) {
-		if(!vis[node]) {
-			rev_dfs(node, cnt);
-			cnt++;
-		}
-	}
-	// Kosaju end
+}
 
-  // Check possibility
-	rep(i, n) {
-		if(component[2*i] == component[2*i + 1]) {
-			cout << 0;
-			return 0;
-		}
+void scc_dfs(int x, vector<int> &topsort) {
+	for(auto y : sadj[x]) if(!vis[y]) {
+		vis[y] = true;
+		scc_dfs(y, topsort);
 	}
-	
-	// find SCC edges
-	rep(start, 2*n) {
-		for(auto &end : adj[start]) {
-			if(component[start] != component[end]) {
-				sEdge[component[start]].insert(component[end]);
-				indeg[component[end]]++;
-			}
-		}
-	}
-
-  // Topological Sort
-	memset(vis, 0, sizeof vis);
-	rep(i, cnt) {
-		if(indeg[i] == 0)
-			topSort(i);
-	}
-	reverse(all(topo));
-	rep(i, cnt) {
-		num[topo[i]] = i;
-	}
-	
-	cout << 1 << endl;
-	rep(i, n) {
-		int c1 = component[2 * i];
-		int c2 = component[2 * i + 1];
-		if(num[c1] < num[c2]) {
-			cout << 0 << " ";
-		} else {
-			cout << 1 << " ";
-		}
-	}
+	topsort.push_back(x);
 }
