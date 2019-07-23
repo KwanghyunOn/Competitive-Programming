@@ -13,23 +13,21 @@ struct MaxFlowDinic {
 	typedef long long flow_t;
 
 	struct Edge {
-		int next;
-		int inv;		// inverse edge index
-		flow_t cap;		// residual capacity
+		int to, ri;
+		flow_t cap;
 	};
 
 	int n;
 	vector<vector<Edge>> graph;
-
 	vector<int> l, start;
 
-	void init(int _n) {
-		n = _n;
+	void init(int sz) {
+		n = sz;
 		graph.resize(n);
-		for(int i = 0; i < n; i++) graph[i].clear();
+		for(int i = 0; i < n; i++)
+			graph[i].clear();
 	}
-
-
+	
 	void addNodes(int cnt) {
 		n += cnt;
 		graph.resize(n);
@@ -42,53 +40,46 @@ struct MaxFlowDinic {
 		graph[e].push_back(reverse);
 	}
 
-
 	bool assignLevel(int source, int sink) {
 		memset(&l[0], 0, sizeof(l[0]) * l.size());
 		l[source] = 1;
-		queue<int> q;
-		q.push(source);
-		while(!q.empty() && !l[sink]) {
-			int cur = q.front(); q.pop();
-			for(int i = 0; i < graph[cur].size(); i++) {
-				int next = graph[cur][i].next;
-				if(l[next]) continue;
-				if(graph[cur][i].cap > 0) {
-					l[next] = l[cur] + 1;
-					q.push(next);
+		queue<int> que;
+		que.push(source);
+		while(!que.empty() && !l[sink]) {
+			int v = que.front(); que.pop();
+			for(auto c : graph[v]) {
+				if(l[c.to]) continue;
+				if(c.cap > 0) {
+					l[c.to] = l[v] + 1;
+					que.push(c.to);
 				}
 			}
 		}
 		return l[sink] != 0;
 	}
 
-
-	flow_t blockFlow(int cur, int sink, flow_t currentFlow) {
-		if(cur == sink) return currentFlow;
-		for(int &i = start[cur]; i < graph[cur].size(); i++) {
-			int next = graph[cur][i].next;
-			if(graph[cur][i].cap == 0 || l[next] != l[cur] + 1)
-				continue;
-			if(flow_t f = blockFlow(next, sink, min(graph[cur][i].cap, currentFlow))) {
-				int inv = graph[cur][i].inv;
-				graph[cur][i].cap -= f;
-				graph[next][inv].cap += f;
+	flow_t blockFlow(int v, int sink, flow_t currentFlow) {
+		if(v == sink) return currentFlow;
+		for(int &i = start[v]; i < (int)graph[v].size(); i++) {
+			int c = graph[v][i].to, ri = graph[v][i].ri;
+			if(graph[v][i].cap == 0 || l[c] != l[v] + 1) continue;
+			if(flow_t f = blockFlow(c, sink, min(currentFlow, graph[v][i].cap))) {
+				graph[v][i].cap -= f;
+				graph[c][ri].cap += f;
 				return f;
 			}
 		}
 		return 0;
 	}
 
-
 	flow_t solve(int source, int sink) {
-		l.resize(n);
-		start.resize(n);
-		flow_t ans = 0;
+		l.resize(n), start.resize(n);
+		flow_t maxFlow = 0;
 		while(assignLevel(source, sink)) {
 			memset(&start[0], 0, sizeof(start[0]) * start.size());
-			while(flow_t flow = blockFlow(source, sink, numeric_limits<flow_t>::max()))
-				ans += flow;
+			while(flow_t f = blockFlow(source, sink, numeric_limits<flow_t>::max()))
+				maxFlow += f;
 		}
-		return ans;
+		return maxFlow;
 	}
 };
