@@ -1,4 +1,3 @@
-// https://blog.myungwoo.kr/54
 typedef complex<double> base;
 
 void fft(vector<base> &a, bool invert) {
