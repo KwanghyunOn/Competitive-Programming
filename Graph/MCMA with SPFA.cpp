@@ -49,20 +49,20 @@ struct MCMF {
 
 		if(dist[sink] == IINF) return false;
 		// add this limit when we don't require maxflow
-        // if( dist[sink] > 0 ) return false;
+		// if( dist[sink] > 0 ) return false;
 
-        flow_t blockFlow = numeric_limits<flow_t>::max();
-        for(int v = sink; v != source; v = pv[v])
-        	blockFlow = min(blockFlow, graph[pv[v]][pe[v]].cap);
+		flow_t blockFlow = numeric_limits<flow_t>::max();
+		for(int v = sink; v != source; v = pv[v])
+			blockFlow = min(blockFlow, graph[pv[v]][pe[v]].cap);
 
-        for(int v = sink; v != source; v = pv[v]) {
-        	int ri = graph[pv[v]][pe[v]].ri;
-        	graph[pv[v]][pe[v]].cap -= blockFlow;
-        	graph[v][ri].cap += blockFlow;
-        }
-        totalFlow += blockFlow;
-        totalCost += blockFlow * dist[sink];
-        return true;
+		for(int v = sink; v != source; v = pv[v]) {
+			int ri = graph[pv[v]][pe[v]].ri;
+			graph[pv[v]][pe[v]].cap -= blockFlow;
+			graph[v][ri].cap += blockFlow;
+		}
+		totalFlow += blockFlow;
+		totalCost += blockFlow * dist[sink];
+		return true;
 	}
 
 	pair<flow_t, flow_t> solve(int source, int sink) {
