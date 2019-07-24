@@ -1,95 +1,73 @@
 struct MCMF {
+	typedef long long flow_t;
+
 	struct Edge {
-		int next, cap, cost;
-		Edge *rev;
-		Edge(int next, int cap, int cost) : next(next), cap(cap), cost(cost) {}
+		int to, ri;
+		flow_t cap, cost;
 	};
 
+	int n;
+	vector<vector<Edge>> graph;
+	vector<int> pv, pe;
+	vector<flow_t> dist;
+	vector<bool> inq;
 
-	int n, source, sink;
-	vector<vector<Edge*>> graph;
-	vector<bool> check;
-	vector<int> dist;
-	vector<pair<int, int>> from;
-
-	MCMF(int n, int source, int sink) : n(n), source(source), sink(sink) {
+	void init(int sz) {
+		n = sz;
 		graph.resize(n);
-		check.resize(n);
-		dist.resize(n);
-		from.resize(n, {-1, -1});
+		pv.resize(n), pe.resize(n);
+		dist.resize(n), inq.resize(n);
 	}
 
-
-	void addEdge(int u, int v, int cap, int cost) {
-		Edge* forward = new Edge(v, cap, cost);
-		Edge* reverse = new EdgE(u, 0, -cost);
-		forward->rev = reverse;
-		reverse->rev = forward;
-		graph[u].push_back(forward);
-		graph[v].push_back(reverse);
+	void addEdge(int s, int e, flow_t cap, flow_t cost) {
+		Edge forward = {e, (int)graph[e].size(), cap, cost};
+		Edge reverse = {s, (int)graph[s].size(), 0, -cost};
+		graph[s].push_back(forward);
+		graph[e].push_back(reverse);
 	}
 
-	void addEdgeFromSource(int v, int cap, int cost) {
-		addEdge(source, v, cap, cost);
-	}
+	bool spfa(int source, int sink, flow_t &totalFlow, flow_t &totalCost) {
+		fill(dist.begin(), dist.end(), IINF);
+		fill(inq.begin(), inq.end(), false);
 
-	void addEdgeToSink(int u, int cap, int cost) {
-		addEdge(u, sink, cap, cost);
-	}
-
-
-	bool spfa(int &totalFlow, int &totalCost) {
-		fill(check.begin(), check.end(), false);
-		fill(dist.begin(), dist.end(), INF);
-		fill(from.begin(), from.end(), make_pair(-1, -1));
-
-		dist[source] = 0;
-		queue<int> q;
-		q.push(source);
-		while(!q.empty()) {
-			int x = q.front();
-			q.pop();
-			check[x] = false;
-			for(int i = 0; i < graph[x].size(); i++) {
-				Edge *e = graph[x][i];
-				int y = e->next;
-				if(e->cap > 0 && dist[y] > dist[x] + e->cost) {
-					dist[y] = dist[x] + e->cost;
-					from[y] = {x, i};
-					if(!check[y]) {
-						check[y] = true;
-						q.push(y);
-					}
+		queue<int> que;
+		que.push(source);
+		dist[source] = 0, inq[source] = true;
+		while(!que.empty()) {
+			int v = que.front(); que.pop();
+			inq[v] = false;
+			for(int i = 0; i < (int)graph[v].size(); i++) {
+				Edge &e = graph[v][i];
+				if(e.cap > 0 && dist[e.to] > dist[v] + e.cost) {
+					dist[e.to] = dist[v] + e.cost;
+					pv[e.to] = v, pe[e.to] = i;
+					if(!inq[e.to])
+						que.push(e.to), inq[e.to] = true;
 				}
 			}
 		}
 
-		if(dist[sink] == INF)
-			return false;
+		if(dist[sink] == IINF) return false;
+		// add this limit when we don't require maxflow
+        // if( dist[sink] > 0 ) return false;
 
-		int x = sink;
-		int c = graph[from[x].first][from[x].second]->cap;
-		while(from[x].first != -1) {
-			c = min(c, graph[from[x].first][from[x].second]->cap);
-			x = from[x].first;
-		}
+        flow_t blockFlow = numeric_limits<flow_t>::max();
+        for(int v = sink; v != source; v = pv[v])
+        	blockFlow = min(blockFlow, graph[pv[v]][pe[v]].cap);
 
-		x = sink;
-		while(from[x].first != -1) {
-			Edge *e = graph[from[x].first][from[x].second];
-			e->cap -= c;
-			e->rev->cap += c;
-			x = from[x].first;
-		}
-
-		totalFlow += c;
-		totalCost += c * dist[sink];
-		return true;
+        for(int v = sink; v != source; v = pv[v]) {
+        	int ri = graph[pv[v]][pe[v]].ri;
+        	graph[pv[v]][pe[v]].cap -= blockFlow;
+        	graph[v][ri].cap += blockFlow;
+        }
+        totalFlow += blockFlow;
+        totalCost += blockFlow * dist[sink];
+        return true;
 	}
 
-	pair<int, int> flow() {
-		int totalCost = 0, totalFlow = 0;
-		while(spfa(totalFlow, totalCost));
+	pair<flow_t, flow_t> solve(int source, int sink) {
+		flow_t totalFlow = 0, totalCost = 0;
+		while(spfa(source, sink, totalFlow, totalCost));
 		return make_pair(totalFlow, totalCost);
 	}
 };
