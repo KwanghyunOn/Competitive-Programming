@@ -48,11 +48,9 @@ struct MaxFlowDinic {
 		while(!que.empty() && !l[sink]) {
 			int v = que.front(); que.pop();
 			for(auto c : graph[v]) {
-				if(l[c.to]) continue;
-				if(c.cap > 0) {
-					l[c.to] = l[v] + 1;
-					que.push(c.to);
-				}
+				if(c.cap == 0 || l[c.to]) continue;
+				l[c.to] = l[v] + 1;
+				que.push(c.to);
 			}
 		}
 		return l[sink] != 0;
