@@ -28,9 +28,9 @@ void color(int v, int col) {
 
 
 // Edge-disjoint BCC
-int num[MAXN], low[MAXN], cnum;
+int num[MAXN], low[MAXN], CUR_TIME = 0;
 void dfs(int v, int p) {
-	num[v] = low[v] = ++cnum;
+	num[v] = low[v] = ++CUR_TIME;
 	for(auto c : adj[v]) {
 		if(c == p) continue;
 		if(num[c]) low[v] = min(low[v], num[c]);
@@ -41,13 +41,13 @@ void dfs(int v, int p) {
 	}
 }
 
-int bcc[MAXN], ccol;
+int bcc[MAXN], CUR_COL = 0;
 bool vis[MAXN];
 void color(int v, int col) {
 	bcc[v] = col;
 	for(auto c : adj[v]) if(!vis[c]) {
 		vis[c] = true;
-		if(low[c] > num[v]) color(c, ++ccol);
+		if(low[c] > num[v]) color(c, ++CUR_COL);
 		else color(c, col);
 	}
 }
