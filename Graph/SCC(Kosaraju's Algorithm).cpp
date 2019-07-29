@@ -1,64 +1,30 @@
-vector<int> adj[MAXN], rev[MAXN];
-
-vector<int> order;
+vector<int> adj[MAXN], rev[MAXN], order;
 bool vis[MAXN];
-int component[MAXN];
-vector<int> cp[MAXN];
+int ci[MAXN];
 
-void dfs(int node) {
-	if(vis[node]) return;
-	vis[node] = true;
-	for(auto &cnode : adj[node])
-		dfs(cnode);
-	order.pb(node);
+void dfs(int v) {
+	for(auto c : adj[v]) if(!vis[c]) {
+		vis[c] = true;
+		dfs(c);
+	}
+	order.push_back(v);
 }
 
-// initialize vis[] before calling this function
-void rev_dfs(int node, int cpNum) {
-	if(vis[node]) return;
-	vis[node] = true;
-	component[node] = cpNum;
-	for(auto cnode : rev[node])
-		rev_dfs(cnode, cpNum);
+void rev_dfs(int v, int id) {
+	ci[v] = id;
+	for(auto c : rev[v]) if(!vis[c]) {
+		vis[c] = true;
+		rev_dfs(c, id);
+	}
 }
 
-int main() {
-	int n, E;
-	geti(n, E);
-	rep(i, E) {
-		int u, v;
-		geti(u, v);
-		adj[u].pb(v);
-		rev[v].pb(u);
-	}
-
-  // Step 1
-	repp(i, n) {
-		if(!vis[i])
-			dfs(i);
-	}
-	reverse(all(order));
-	fill(vis + 1, vis + n + 1, 0);
-	
-	// Step 3
-	int cnt = 0;
-	rep(i, n) {
-		if(component[order[i]] == 0) {
-			cnt++;
-			rev_dfs(order[i], cnt);
-		}
-	}
-
-	cout << cnt << endl;
-	vector<vector<int>> ans(cnt);
-	repp(i, n) {
-		ans[component[i] - 1].pb(i);
-	}
-	sort(all(ans));
-	for(auto v : ans) {
-		for(auto e : v) {
-			cout << e << " ";
-		}
-		cout << -1 << endl;
-	}
+int SCC() {
+	for(int v = 1; v <= n; v++)
+		if(!vis[v]) vis[v] = true, dfs(v);
+	reverse(order.begin(), order.end());
+	for(int v = 1; v <= n; v++) vis[v] = false;
+	int sz = 0;
+	for(int v : order)
+		if(!vis[v]) vis[v] = true, rev_dfs(v, ++sz);
+	return sz;
 }
