@@ -68,13 +68,13 @@ double findYZ(double x, double &yy, double &zz) {
 		if(bm & 1) C1 = findZ(x, R-D, Z1);
 		if(bm & 2) C2 = findZ(x, L+D, Z2);
 		if(C1 < C2) {
-			R = L+D;
 			mx = C1, zz = Z1, yy = R-D;
 			C2 = C1, bm = 1;
+			R = L+D;
 		} else {
-			L = R-D;
 			mx = C2, zz = Z2, yy = L+D;
 			C1 = C2, bm = 2;
+			L = R-D;
 		}
 	}
 	return mx;
@@ -88,13 +88,13 @@ double findXYZ(double &xx, double &yy, double &zz) {
 		if(bm & 1) C1 = findYZ(R-D, Y1, Z1);
 		if(bm & 2) C2 = findYZ(L+D, Y2, Z2);
 		if(C1 < C2) {
-			R = L+D;
 			mx = C1, zz = Z1, yy = Y1, xx = R-D;
 			C2 = C1, bm = 1;
+			R = L+D;
 		} else {
-			L = R-D;
 			mx = C2, zz = Z2, yy = Y2, xx = L+D;
 			C1 = C2, bm = 2;
+			L = R-D;
 		}
 	}
 	return mx;
