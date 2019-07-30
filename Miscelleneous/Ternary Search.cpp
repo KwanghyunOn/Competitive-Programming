@@ -48,13 +48,13 @@ double findZ(double x, double y, double &zz) {
 		if(bm & 1) C1 = find(x, y, R-D);
 		if(bm & 2) C2 = find(x, y, L+D);
 		if(C1 < C2) {
-			R = L+D;
 			mx = C1, zz = R-D;
 			C2 = C1, bm = 1;
+			R = L+D;
 		} else {
-			L = R-D;
 			mx = C2, zz = L+D;
 			C1 = C2, bm = 2;
+			L = R-D;
 		}
 	}
 	return mx;
