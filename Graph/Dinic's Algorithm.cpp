@@ -59,11 +59,11 @@ struct MaxFlowDinic {
 	flow_t blockFlow(int v, int sink, flow_t currentFlow) {
 		if(v == sink) return currentFlow;
 		for(int &i = start[v]; i < (int)graph[v].size(); i++) {
-			int c = graph[v][i].to, ri = graph[v][i].ri;
-			if(graph[v][i].cap == 0 || l[c] != l[v] + 1) continue;
-			if(flow_t f = blockFlow(c, sink, min(currentFlow, graph[v][i].cap))) {
+			Edge &c = graph[v][i];
+			if(c.cap == 0 || l[c.to] != l[v] + 1) continue;
+			if(flow_t f = blockFlow(c.to, sink, min(currentFlow, c.cap))) {
 				graph[v][i].cap -= f;
-				graph[c][ri].cap += f;
+				graph[c.to][c.ri].cap += f;
 				return f;
 			}
 		}
