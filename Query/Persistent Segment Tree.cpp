@@ -1,74 +1,40 @@
-const int MAXN = 1e5 + 50;
-const int LOGN = 14;
+const int MAXN = 1e6 + 50;
+const int LOGN = 20;
 
-int n, cnt;
-int root[MAXN];
-
-struct node {
+int root[MAXN], NEXT_FREE_INDEX = 0;
+struct Node {
 	int sum, left, right;
-} tree[3 * MAXN * LOGN];
+} tree[2*MAXN + MAXQ*(LOGN+1)];
 
-int build(int l = 0, int r = n) {
-	int idx = ++cnt;
-	if(r - l <= 1) {
-		tree[idx] = {0, 0, 0};
-		return idx;
+int buildTree(int l, int r, int *z) {
+	int id = ++NEXT_FREE_INDEX;
+	if(l == r) {
+		tree[id] = {z[l], 0, 0};
+		return id;
 	}
 	int mid = (l + r) >> 1;
-	tree[idx] = {0, build(l, mid), build(mid, r)};
-	return idx;
+	int L = buildTree(l, mid, z), R = buildTree(mid+1, r, z);
+	tree[id] = {tree[L].sum + tree[R].sum, L, R};
+	return id;
 }
 
-int update(int x, int prev, int l = 0, int r = n) {
-	if(x < l || r <= x) return prev;
-	int idx = ++cnt;
-	if(r - l <= 1) {
-		tree[idx] = {1, 0, 0};
-		return idx;
+int updateTree(int x, int val, int prev, int l = 1, int r = n) {
+	if(x < l || r < x) return prev;
+	int id = ++NEXT_FREE_INDEX;
+	if(l == r) {
+		tree[id] = {val, 0, 0};
+		return id;
 	}
-
 	int mid = (l + r) >> 1;
-	int L = update(x, tree[prev].left, l, mid);
-	int R = update(x, tree[prev].right, mid, r);
-	tree[idx] = {tree[L].sum + tree[R].sum, L, R};
-	return idx;
+	int L = updateTree(x, val, tree[prev].left, l, mid);
+	int R = updateTree(x, val, tree[prev].right, mid+1, r);
+	tree[id] = {tree[L].sum + tree[R].sum, L, R};
+	return id;
 }
 
-int query(int x, int y, int k, int l = 0, int r = n) {
-	if(r - l <= 1) return l;
+int rangeSum(int x, int y, int id, int l = 1, int r = n) {
+	if(y < l || r < x) return 0;
+	if(x <= l && r <= y) return tree[id].sum;
 	int mid = (l + r) >> 1;
-	int leftSum = tree[tree[y].left].sum - tree[tree[x].left].sum;
-	if(leftSum >= k)
-		return query(tree[x].left, tree[y].left, k, l, mid);
-	else
-		return query(tree[x].right, tree[y].right, k - leftSum, mid, r);
-}
-
-
-
-int a[MAXN], rev[MAXN];
-map<int, int> M;
-
-int main() {
-	int q;
-	geti(n, q);
-	for(int i = 1; i <= n; i++) {
-		geti(a[i]);
-		rev[i-1] = a[i];
-	}
-	sort(rev, rev + n);
-	for(int i = 0; i < n; i++)
-		M[rev[i]] = i;
-	for(int i = 1; i <= n; i++)
-		a[i] = M[a[i]];
-
-	root[0] = build();
-	for(int i = 1; i <= n; i++)
-		root[i] = update(a[i], root[i-1]);
-
-	while(q--) {
-		int i, j, k;
-		geti(i, j, k);
-		printf("%d\n", rev[query(root[i-1], root[j], k)]);
-	}
+	return rangeSum(x, y, tree[id].left, l, mid) + rangeSum(x, y, tree[id].right, mid+1, r);
 }
